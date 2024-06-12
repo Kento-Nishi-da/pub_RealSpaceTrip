@@ -256,7 +256,6 @@ public class GameManager : MonoBehaviour
         moneyText.text = "獲得コイン：+" + pl.gameMoney;
 
 
-
         // 一定時間が経過したらオブジェクト生成
         objectTimer += Time.deltaTime;
         if (objectTimer > GENERATE_TIME)
@@ -343,8 +342,6 @@ public class GameManager : MonoBehaviour
                 continuePanel.SetActive(true);
             }
         }
-
-
     }
 
     /// <summary>
@@ -354,15 +351,26 @@ public class GameManager : MonoBehaviour
     {
         var tmpScore = pl.gameScore;
 
+        // 暫定でランキング入りさせる
+        if (rankingObjs[rankingObjs.Length - 1].TryGetComponent<RankingObj>(out var tmpRank))
+        {
+            tmpRank.score = tmpScore;
+            tmpRank.pName = playerName;
+            playerRankIndex = rankingObjs.Length - 1;
+        }
+
         // 何番目に入るのかを調べる&配列の更新
         for (int i = rankingObjs.Length - 2; i >= 0; i--)
         {
             var rank = rankingObjs[i].GetComponent<RankingObj>();
+            // 順位が上がっていくか判定
             if (rank.score < tmpScore)
             {
+                print("スコアが大きかった");
                 // i+1番目のスコアの順位を一つ下へずらす
                 if (rankingObjs[i + 1].TryGetComponent<RankingObj>(out var lowRank))
                 {
+                    print("oooo");
                     lowRank.score = rankingObjs[i].GetComponent<RankingObj>().score;
                     lowRank.pName = rankingObjs[i].GetComponent<RankingObj>().pName;
                     if (rankingObjs[i].GetComponent<RankingObj>().score >= 0)
@@ -378,10 +386,11 @@ public class GameManager : MonoBehaviour
                     playerRankIndex = i;
                     rankingObjs[i].SetActive(true);
                 }
+                continue;
             }
             else
             {
-                break;
+                break; 
             }
         }
 
@@ -396,14 +405,14 @@ public class GameManager : MonoBehaviour
         Debug.Log("ランキング配列更新完了");
 
         // ランキングが確定したのでGASの更新
-        yield return StartCoroutine(UpdateRanking());
+        yield return StartCoroutine(UpdateGas());
     }
 
     /// <summary>
     /// GASの更新
     /// </summary>
     /// <returns></returns>
-    IEnumerator UpdateRanking()
+    IEnumerator UpdateGas()
     {
         // jsonデータ作成
         var jsonPost = JsonUtility.ToJson(ShareData.instance.Ranking);
@@ -490,7 +499,7 @@ public class GameManager : MonoBehaviour
     /// <summary>
     /// ランキングの名前決定ボタン押下時の処理
     /// </summary>
-    public IEnumerator PushNameButton()
+    public void PushNameButton()
     {
         if (nameInputField.text == "")
         {
@@ -500,7 +509,7 @@ public class GameManager : MonoBehaviour
         {
             playerName = nameInputField.text;
             nameInputPanel.SetActive(false);
-            yield return StartCoroutine(RankingUpdate());
+            StartCoroutine(RankingUpdate());
             if (state == GameState.SHOW_RESULT) state += 1;
         }
     }
